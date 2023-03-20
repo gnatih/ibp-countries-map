@@ -1,12 +1,12 @@
 <script setup>
 import * as d3 from "d3";
-import { feature } from "topojson";
-import { onMounted, ref } from "vue";
+import { feature } from "topojson-client";
+import { onMounted, ref, watch } from "vue";
 import _ from "lodash";
 
+let countries = ref(0);
 let mode = ref("map");
 let obs_countries = ref(0);
-let total_countries = ref(0);
 
 let setMode = function (str) {
   mode.value = str;
@@ -19,8 +19,10 @@ onMounted(() => {
       "https://opensheet.elk.sh/15Fhb7nWSG0WlKzlD96Qy8VfjHuZPa4P0AVIKJqALPtM/countries_db"
     ),
   ]).then(([c, d]) => {
+    countries.value = d;
+
     _.remove(c.objects.countries.geometries, (c3) =>
-      ["Antarctica"].includes(c3.properties.name)
+      ["Antarctica",].includes(c3.properties.name)
     );
 
     const width = document.body.clientWidth;
@@ -47,7 +49,6 @@ onMounted(() => {
       .append("path")
       .attr("d", geoGenerator)
       .attr("fill", function (country) {
-        total_countries.value++;
         let c = _.find(d, { Country: country.properties.name });
 
         if (!_.isUndefined(c)) {
@@ -87,11 +88,17 @@ onMounted(() => {
 
 <template>
   <div class="tab">
-    <span @click="setMode('map')">Map</span
-    ><span @click="setMode('list')">List</span>
+    <span @click="setMode('map')">Map</span><span @click="setMode('list')">List</span>
   </div>
 
-  <svg></svg>
+  <div class="countries-map" v-show="mode == 'map'">
+    <svg></svg>
+  </div>
+  <div class="countries-list" v-show="mode == 'list'">
+    <div v-for="country, index in countries">
+      {{ `${country.Country}` }} <span :class="_.kebabCase(country.Type)" class="legend-circle"></span>
+    </div>
+  </div>
 </template>
 
 <style lang="scss">
@@ -105,6 +112,38 @@ onMounted(() => {
   display: flex;
   justify-content: center;
   align-items: center;
+  left: -999;
+  top: -999;
+}
+
+.legend-circle {
+  width: 8px;
+  height: 8px;
+  display: inline-flex;
+  border-radius: 500px;
+}
+
+.obs-country {
+  background-color: #52C3C9;
+}
+
+.multiple-projects {
+  background-color: #0083A9;
+}
+
+.country-office {
+  background-color: #034A8A;
+}
+
+.countries-list {
+  columns: 4;
+  // display: grid;
+  // grid-template-columns: repeat(4, 1fr);
+  // grid-auto-flow: row;
+
+  @media screen and (max-width: 767px) {
+    columns: 2;
+  }
 }
 
 .tab {

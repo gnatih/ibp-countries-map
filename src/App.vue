@@ -1,16 +1,17 @@
 <script setup>
 import * as d3 from "d3";
 import { feature } from "topojson-client";
-import { onMounted, ref, computed } from "vue";
+import { onMounted, ref, computed, watch } from "vue";
 import _ from "lodash";
 
 let countries = ref(0);
 let mode = ref("map");
 let obs_countries = ref(0);
 let selected_country = ref(null);
-
-let setMode = function (str) {
-  mode.value = str;
+let sort = ref(null);
+let setMode = str => {
+  if (!sort.value) sort.value = 'high-to-low';
+  mode.value = str
 };
 
 const tooltip_text = computed(() => {
@@ -30,28 +31,18 @@ const tooltip_text = computed(() => {
   }
 });
 
+watch(sort, (val) => {
+  countries.value = _.orderBy(countries.value, [val == 'alphabetical' ? 'Country' : 'Type'], [val == 'low-to-high' ? 'desc' : 'asc']);
+})
+
 onMounted(() => {
   Promise.all([d3.json("countries-50m.json"), d3.json("https://opensheet.elk.sh/15Fhb7nWSG0WlKzlD96Qy8VfjHuZPa4P0AVIKJqALPtM/countries_db")]).then(([c, d]) => {
     countries.value = d;
-
     _.remove(c.objects.countries.geometries, (c3) => ["Antarctica"].includes(c3.properties.name));
-
-    let missing = [];
-    // console.log(c.objects.countries.geometries.length);
-    c.objects.countries.geometries.forEach((geojson) => {
-      let country = _.find(d, { Country: geojson.properties.name });
-      missing.push(geojson.properties.name);
-    });
-
-    missing.sort();
-
-    console.log(missing.join(","));
-    // console.log(_.filter(countries.value, { Type: "OBS Country" }));
 
     const width = d3.select(".countries-map").node().getBoundingClientRect().width;
     const height = d3.select(".countries-map").node().getBoundingClientRect().height;
-    var tooltip = d3.select("body").append("div").attr("class", "map-tooltip").style("opacity", 0);
-
+    let tooltip = d3.select("body").append("div").attr("class", "map-tooltip").style("opacity", 0);
     let svg = d3.select("svg");
     let g = svg.append("g");
     let projection = d3
@@ -119,7 +110,17 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="tab-bar"><span @click="setMode('map')" :class="[mode == 'map' ? 'active' : '']">Map View</span><span @click="setMode('list')" :class="[mode == 'list' ? 'active' : '']">List View</span></div>
+  <div class="tab-bar">
+    <div class="tab-buttons"><span @click="setMode('map')" :class="[mode == 'map' ? 'active' : '']">Map View</span><span @click="setMode('list')" :class="[mode == 'list' ? 'active' : '']">List View</span></div>
+    <div class="sort-select" v-if="mode == 'list'">
+      Sort by
+      <select @change="$event => sort = $event.target.value">
+        <option value="high-to-low" selected>IBP Engagement High to Low</option>
+        <option value="low-to-high">IBP Engagement Low to High</option>
+        <option value="alphabetical">Alphabetical</option>
+      </select>
+    </div>
+  </div>
 
   <div class="countries-map" v-show="mode == 'map'">
     <svg></svg>
@@ -156,6 +157,10 @@ onMounted(() => {
     text-decoration: none;
     border-bottom: 1px solid var(--ibp-accent, #ff863a);
   }
+
+  .legend-circle {
+    margin-left: 6px;
+  }
 }
 
 .map-categories {
@@ -164,7 +169,7 @@ onMounted(() => {
   justify-content: stretch;
   align-items: stretch;
 
-  & > div {
+  &>div {
     border-top-width: 20px;
     border-bottom-width: 0;
     border-left-width: 0;
@@ -184,6 +189,7 @@ onMounted(() => {
   bottom: 25px;
   left: 25px;
   background-color: white;
+
   h5 {
     margin: 0;
     margin-bottom: 20px;
@@ -195,7 +201,7 @@ onMounted(() => {
   height: 9px;
   display: inline-flex;
   border-radius: 500px;
-  margin-left: 6px;
+  // margin-left: 6px;
 }
 
 .obs-country {
@@ -214,20 +220,25 @@ onMounted(() => {
 }
 
 .countries-list {
-  column-gap: 0;
-  columns: 4;
+  // column-gap: 0;
+  // columns: 4;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
   padding: 25px;
 
   @media screen and (max-width: 767px) {
-    columns: 2;
+    padding: 15px;
+    grid-template-columns: repeat(2, 1fr);
+    // columns: 2;
   }
 
-  & > div {
+  &>div {
     padding-top: 20px;
     padding-bottom: 20px;
     border-bottom: 1px solid #ccc;
-    display: flex;
+    // display: flex;
     align-items: center;
+    font-size: 16px;
   }
 }
 
@@ -236,20 +247,51 @@ onMounted(() => {
   position: relative;
 }
 
+// .tab-bar {
+//   display: flex;
+//   background: var(--ibp-teal-dark, #063d4f);
+
+//   span {
+//     background: var(--ibp-teal-dark, #063d4f);
+//     cursor: pointer;
+//     color: white;
+//     padding: 14px 20px;
+//     font-weight: 700;
+
+//     &.active {
+//       color: var(--ibp-body-text, black);
+//       background: white;
+//     }
+//   }
+// }
+
 .tab-bar {
-  display: flex;
   background: var(--ibp-teal-dark, #063d4f);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: white;
+  font-weight: 700;
 
-  span {
-    background: var(--ibp-teal-dark, #063d4f);
-    cursor: pointer;
-    color: white;
-    padding: 14px 20px;
-    font-weight: 700;
+  .tab-buttons {
+    display: flex;
 
-    &.active {
-      color: var(--ibp-body-text, black);
-      background: white;
+    span {
+      padding: 14px 20px;
+
+      &.active {
+        color: var(--ibp-body-text, black);
+        background: white;
+      }
+    }
+  }
+
+  .sort-select {
+    font-size: 13px;
+
+    select {
+      margin-left: 8px;
+      padding: 8px 14px;
     }
   }
 }

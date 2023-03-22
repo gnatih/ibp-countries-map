@@ -380,7 +380,7 @@ onMounted(() => {
       flex-direction: column;
 
       select {
-        margin-left: -4px;
+        margin-left: 0;
         margin-top: 4px;
       }
     }

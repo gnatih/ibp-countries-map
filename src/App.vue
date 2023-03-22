@@ -3,7 +3,6 @@ import * as d3 from "d3";
 import { feature } from "topojson-client";
 import { onMounted, ref, computed, watch } from "vue";
 import { find, orderBy, remove, kebabCase, isUndefined } from "lodash";
-import * as c from "./countries-50m.json";
 
 let countries = ref(0);
 let mode = ref("map");
@@ -35,7 +34,7 @@ const tooltip_text = computed(() => {
 let zoom = d3.zoom().scaleExtent([1, 8]);
 
 let zoomOut = () => {
-  d3.select("svg").call(zoom.transform, d3.zoomIdentity);
+  d3.selectAll("svg").call(zoom.transform, d3.zoomIdentity);
 };
 
 watch(sort, (val) => {
@@ -43,14 +42,14 @@ watch(sort, (val) => {
 });
 
 onMounted(() => {
-  Promise.all([d3.json("https://opensheet.elk.sh/15Fhb7nWSG0WlKzlD96Qy8VfjHuZPa4P0AVIKJqALPtM/countries_db")]).then(([d]) => {
+  Promise.all([d3.json("https://cdn.jsdelivr.net/npm/world-atlas@2/countries-50m.json"), d3.json("https://opensheet.elk.sh/15Fhb7nWSG0WlKzlD96Qy8VfjHuZPa4P0AVIKJqALPtM/countries_db")]).then(([c, d]) => {
     countries.value = d;
     remove(c.objects.countries.geometries, (c3) => ["Antarctica"].includes(c3.properties.name));
 
-    const width = d3.select(".countries-map").node().getBoundingClientRect().width;
-    const height = d3.select(".countries-map").node().getBoundingClientRect().height;
-    let tooltip = d3.select("body").append("div").attr("class", "map-tooltip").style("opacity", 0);
-    let svg = d3.select("svg");
+    const width = d3.selectAll(".countries-map").node().getBoundingClientRect().width;
+    const height = d3.selectAll(".countries-map").node().getBoundingClientRect().height;
+    let tooltip = d3.selectAll("body").append("div").attr("class", "map-tooltip").style("opacity", 0);
+    let svg = d3.selectAll("svg");
     let g = svg.append("g");
     let projection = d3
       .geoNaturalEarth1()
@@ -64,7 +63,7 @@ onMounted(() => {
       "Country Office": "#034A8A",
     };
 
-    svg = d3.select("svg").attr("viewBox", `0 0 ${width} ${height}`).attr("preserveAspectRatio", "xMinYMin");
+    svg = d3.selectAll("svg").attr("viewBox", `0 0 ${width} ${height}`).attr("preserveAspectRatio", "xMinYMin");
     g.selectAll("path")
       .data(feature(c, c.objects.countries).features)
       .enter()
@@ -104,7 +103,7 @@ onMounted(() => {
 
     svg.call(zoom);
 
-    d3.select("body").on("click", (e) => {
+    d3.selectAll("body").on("click", (e) => {
       if (e.target.tagName !== "path") {
         tooltip.style("opacity", 0).style("pointer-events", "none");
       }

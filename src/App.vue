@@ -153,8 +153,13 @@ onMounted(() => {
 
     <div class="countries-list-grid">
       <div v-for="country in countries">
-        {{ `${country.Country}` }}
-        <span :class="kebabCase(country.Type)" class="legend-circle"></span>
+        <template v-if="country.URL">
+          <a :href="country.URL">{{ `${country.Country}` }}</a> <span :class="kebabCase(country.Type)" class="legend-circle"></span>
+        </template>
+        <template v-else>
+          {{ `${country.Country}` }}
+          <span :class="kebabCase(country.Type)" class="legend-circle"></span>
+        </template>
       </div>
     </div>
   </div>

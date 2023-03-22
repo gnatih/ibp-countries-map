@@ -38,6 +38,7 @@ let zoomOut = () => {
 };
 
 watch(sort, (val) => {
+  console.log(val);
   countries.value = orderBy(countries.value, [val == "alphabetical" ? "Country" : "Type"], [val == "low-to-high" ? "desc" : "asc"]);
 });
 
@@ -115,8 +116,8 @@ onMounted(() => {
 <template>
   <div class="tab-bar">
     <div class="tab-buttons">
-      <div @click="mode = 'map'" :class="[mode == 'map' ? 'active' : '']">Map<span class="xs-none"> View</span></div>
-      <div @click="mode = 'list'" :class="[mode == 'list' ? 'active' : '']">List<span class="xs-none"> View</span></div>
+      <div @click="setMode('map')" :class="[mode == 'map' ? 'active' : '']">Map<span class="xs-none"> View</span></div>
+      <div @click="setMode('list')" :class="[mode == 'list' ? 'active' : '']">List<span class="xs-none"> View</span></div>
     </div>
     <div class="sort-select" v-if="mode == 'list'">
       Sort by
@@ -210,6 +211,7 @@ onMounted(() => {
   display: flex;
   justify-content: stretch;
   align-items: stretch;
+  line-height: 17px;
 
   & > div {
     border-top-width: 15px;
@@ -366,6 +368,7 @@ onMounted(() => {
       background: none;
       border: none;
       color: white;
+      -webkit-appearance: none;
 
       &:focus {
         outline: none;

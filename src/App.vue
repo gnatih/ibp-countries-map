@@ -43,7 +43,7 @@ watch(sort, (val) => {
 });
 
 onMounted(() => {
-  Promise.all([d3.json("https://cdn.jsdelivr.net/npm/world-atlas@2/countries-50m.json"), d3.json("https://opensheet.elk.sh/15Fhb7nWSG0WlKzlD96Qy8VfjHuZPa4P0AVIKJqALPtM/countries_db")]).then(([c, d]) => {
+  Promise.all([d3.json("https://obs.test/themes/custom/ibp_core/assets/js/countries-50m.json"), d3.json("https://opensheet.elk.sh/15Fhb7nWSG0WlKzlD96Qy8VfjHuZPa4P0AVIKJqALPtM/countries_db")]).then(([c, d]) => {
     countries.value = d;
     remove(c.objects.countries.geometries, (c3) => ["Antarctica"].includes(c3.properties.name));
 

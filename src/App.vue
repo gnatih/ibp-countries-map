@@ -5,7 +5,7 @@ import { onMounted, ref, computed, watch } from "vue";
 import { find, orderBy, remove, kebabCase, isUndefined } from "lodash";
 
 let countries = ref(0);
-let mode = ref("map");
+let mode = ref("list");
 let obs_countries = ref(0);
 let selected_country = ref(null);
 let sort = ref(null);
@@ -43,20 +43,20 @@ watch(sort, (val) => {
 });
 
 onMounted(() => {
-  Promise.all([d3.json("https://obs.test/themes/custom/ibp_core/assets/js/countries-50m.json"), d3.json("https://opensheet.elk.sh/15Fhb7nWSG0WlKzlD96Qy8VfjHuZPa4P0AVIKJqALPtM/countries_db")]).then(([c, d]) => {
-    countries.value = d;
-    remove(c.objects.countries.geometries, (c3) => ["Antarctica"].includes(c3.properties.name));
+  Promise.all([d3.json("https://opensheet.elk.sh/15Fhb7nWSG0WlKzlD96Qy8VfjHuZPa4P0AVIKJqALPtM/countries_db")]).then(([c]) => {
+    countries.value = c;
+    // remove(c.objects.countries.geometries, (c3) => ["Antarctica"].includes(c3.properties.name));
 
-    const width = d3.selectAll(".countries-map").node().getBoundingClientRect().width;
-    const height = d3.selectAll(".countries-map").node().getBoundingClientRect().height;
-    let tooltip = d3.selectAll("body").append("div").attr("class", "map-tooltip").style("opacity", 0);
-    let svg = d3.selectAll("svg");
-    let g = svg.append("g");
-    let projection = d3
-      .geoNaturalEarth1()
-      .translate([width / 2.2, height / 2])
-      .scale(250);
-    let geoGenerator = d3.geoPath().projection(projection);
+    // const width = d3.selectAll(".countries-map").node().getBoundingClientRect().width;
+    // const height = d3.selectAll(".countries-map").node().getBoundingClientRect().height;
+    // let tooltip = d3.selectAll("body").append("div").attr("class", "map-tooltip").style("opacity", 0);
+    // let svg = d3.selectAll("svg");
+    // let g = svg.append("g");
+    // let projection = d3
+    //   .geoNaturalEarth1()
+    //   .translate([width / 2.2, height / 2])
+    //   .scale(250);
+    // let geoGenerator = d3.geoPath().projection(projection);
 
     let colors = {
       "OBS Country": "#52C3C9",
@@ -64,61 +64,58 @@ onMounted(() => {
       "Country Office": "#034A8A",
     };
 
-    svg = d3.selectAll("svg").attr("viewBox", `0 0 ${width} ${height}`).attr("preserveAspectRatio", "xMinYMin");
-    g.selectAll("path")
-      .data(feature(c, c.objects.countries).features)
-      .enter()
-      .append("path")
-      .attr("d", geoGenerator)
-      .attr("fill", function (country) {
-        let c = find(countries.value, { Country: country.properties.name });
+    // svg = d3.selectAll("svg").attr("viewBox", `0 0 ${width} ${height}`).attr("preserveAspectRatio", "xMinYMin");
+    // g.selectAll("path")
+    //   .data(feature(c, c.objects.countries).features)
+    //   .enter()
+    //   .append("path")
+    //   .attr("d", geoGenerator)
+    //   .attr("fill", function (country) {
+    //     let c = find(countries.value, { Country: country.properties.name });
 
-        if (!isUndefined(c)) {
-          if (c.Type == "OBS Country") obs_countries.value++;
-          return colors[c.Type];
-        }
+    //     if (!isUndefined(c)) {
+    //       if (c.Type == "OBS Country") obs_countries.value++;
+    //       return colors[c.Type];
+    //     }
 
-        return "#ccc";
-      })
-      .attr("class", (country) => [kebabCase(country.properties.name), "country"].join(" "))
-      .attr("stroke-width", 1)
-      .attr("stroke", "#fff")
-      .style("cursor", "pointer")
-      .on("click", (e, el) => {
-        selected_country.value = el.properties.name;
+    //     return "#ccc";
+    //   })
+    //   .attr("class", (country) => [kebabCase(country.properties.name), "country"].join(" "))
+    //   .attr("stroke-width", 1)
+    //   .attr("stroke", "#fff")
+    //   .style("cursor", "pointer")
+    //   .on("click", (e, el) => {
+    //     selected_country.value = el.properties.name;
 
-        tooltip
-          .html(tooltip_text.value)
-          .style("left", e.pageX + "px")
-          .style("top", e.pageY + "px")
-          .style("opacity", 1)
-          .style("pointer-events", "auto");
-      });
+    //     tooltip
+    //       .html(tooltip_text.value)
+    //       .style("left", e.pageX + "px")
+    //       .style("top", e.pageY + "px")
+    //       .style("opacity", 1)
+    //       .style("pointer-events", "auto");
+    //   });
 
-    zoom.on("zoom", (e) => {
-      tooltip.style("opacity", 0).style("pointer-events", "none");
-      g.selectAll("path")
-        .attr("transform", e.transform)
-        .attr("stroke-width", 1 / e.transform.k);
-    });
+    // zoom.on("zoom", (e) => {
+    //   tooltip.style("opacity", 0).style("pointer-events", "none");
+    //   g.selectAll("path")
+    //     .attr("transform", e.transform)
+    //     .attr("stroke-width", 1 / e.transform.k);
+    // });
 
-    svg.call(zoom);
+    // svg.call(zoom);
 
-    d3.selectAll("body").on("click", (e) => {
-      if (e.target.tagName !== "path") {
-        tooltip.style("opacity", 0).style("pointer-events", "none");
-      }
-    });
+    // d3.selectAll("body").on("click", (e) => {
+    //   if (e.target.tagName !== "path") {
+    //     tooltip.style("opacity", 0).style("pointer-events", "none");
+    //   }
+    // });
   });
 });
 </script>
 
 <template>
   <div class="tab-bar">
-    <div class="tab-buttons">
-      <div @click="setMode('map')" :class="[mode == 'map' ? 'active' : '']">Map<span class="xs-none"> View</span></div>
-      <div @click="setMode('list')" :class="[mode == 'list' ? 'active' : '']">List<span class="xs-none"> View</span></div>
-    </div>
+    <div class="tab-buttons"></div>
     <div class="sort-select" v-if="mode == 'list'">
       Sort by
       <select @change="($event) => (sort = $event.target.value)">
@@ -129,19 +126,7 @@ onMounted(() => {
     </div>
   </div>
 
-  <div class="countries-map" v-show="mode == 'map'">
-    <svg></svg>
-    <div class="legend-block">
-      <h5>IBP Engagement</h5>
-      <div class="map-categories">
-        <div class="obs-country">Open Budget Survey Countries</div>
-        <div class="multiple-projects">Countries with Multiple Projects</div>
-        <div class="country-office">Country Office</div>
-      </div>
-    </div>
-    <div class="map-reset" @click="zoomOut()">Zoom out <i class="fa fa-minus-circle"></i></div>
-  </div>
-  <div class="countries-list" v-show="mode == 'list'">
+  <div class="countries-list">
     <div class="legend-block">
       <h5>IBP Engagement</h5>
       <div class="map-categories">
